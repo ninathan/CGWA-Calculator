@@ -22,6 +22,46 @@ export default function Calculator() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showUnitsInfo, setShowUnitsInfo] = useState(false);
 
+  // Save data to JSON file
+  const handleSaveData = () => {
+    const dataToSave = {
+      version: "1.0",
+      savedAt: new Date().toISOString(),
+      years: years
+    };
+    const dataStr = JSON.stringify(dataToSave, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cgwa-calculator-${new Date().getTime()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Import data from JSON file
+  const handleImportData = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        if (importedData.years && Array.isArray(importedData.years)) {
+          setYears(importedData.years);
+        } else {
+          alert('Invalid file format. Please select a valid CGWA Calculator backup file.');
+        }
+      } catch (error) {
+        alert('Error reading file. Please select a valid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset the input so the same file can be selected again
+    event.target.value = '';
+  };
+
   // Check localStorage on mount for theme and warning
   useEffect(() => {
     const warningDismissed = localStorage.getItem('cgwa-warning-dismissed');
@@ -33,7 +73,30 @@ export default function Calculator() {
     if (savedTheme === 'dark') {
       setIsDarkMode(true);
     }
+
+    // Auto-restore data from localStorage
+    const savedData = localStorage.getItem('cgwa-auto-save');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        if (parsedData.years && Array.isArray(parsedData.years)) {
+          setYears(parsedData.years);
+        }
+      } catch (error) {
+        console.error('Error restoring auto-saved data:', error);
+      }
+    }
   }, []);
+
+  // Auto-save data to localStorage whenever years change
+  useEffect(() => {
+    const autoSaveData = {
+      version: "1.0",
+      savedAt: new Date().toISOString(),
+      years: years
+    };
+    localStorage.setItem('cgwa-auto-save', JSON.stringify(autoSaveData));
+  }, [years]);
 
   // Toggle theme and save to localStorage
   const toggleTheme = () => {
@@ -140,7 +203,7 @@ export default function Calculator() {
   const honor = getAcademicHonor();
 
   return (
-    <div className={`min-h-screen p-6 md:p-12 font-sans transition-colors duration-500 ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-blue-950/30 to-slate-900 text-white' : 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 text-slate-800'}`}>
+    <div className={`min-h-screen p-6 md:p-12 font-sans transition-colors duration-500 ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-primary-950/30 to-slate-900 text-white' : 'bg-gradient-to-br from-slate-50 via-primary-50/30 to-slate-50 text-slate-800'}`}>
       
       {/* Warning Card Overlay */}
       {showWarning && (
@@ -183,14 +246,14 @@ export default function Calculator() {
         <header className={`p-4 sm:p-6 md:p-8 shadow-[6px_6px_0_#000] md:shadow-[8px_8px_0_#000] animate-fade-in border-3 md:border-4 transition-colors duration-500 ${isDarkMode ? 'bg-slate-800 border-white' : 'bg-white border-black'}`}>
           <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 md:gap-4 mb-3">
             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 flex-1 min-w-0">
-              <div className={`border-2 sm:border-3 md:border-4 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 shadow-[2px_2px_0_#000] sm:shadow-[3px_3px_0_#000] md:shadow-[4px_4px_0_#000] transform -skew-x-6 bg-gradient-to-br from-blue-600 to-violet-600 flex-shrink-0 ${isDarkMode ? 'border-white' : 'border-black'}`}>
+              <div className={`border-2 sm:border-3 md:border-4 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 shadow-[2px_2px_0_#000] sm:shadow-[3px_3px_0_#000] md:shadow-[4px_4px_0_#000] transform -skew-x-6 bg-gradient-to-br from-primary-600 to-accent-600 flex-shrink-0 ${isDarkMode ? 'border-white' : 'border-black'}`}>
                 <span className="text-white font-black text-sm sm:text-lg md:text-2xl transform skew-x-6 block">CGWA</span>
               </div>
               <h1 className={`font-black uppercase leading-tight ${isDarkMode ? 'text-white' : 'text-black'}`}>
                 <span className="block text-base sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl tracking-tight">
                   Calculator
                 </span>
-                <span className="block text-xs sm:text-base md:text-lg lg:text-xl xl:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600 -mt-0.5 sm:-mt-1">
+                <span className="block text-xs sm:text-base md:text-lg lg:text-xl xl:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600 -mt-0.5 sm:-mt-1">
                   For NU
                 </span>
               </h1>
@@ -226,10 +289,46 @@ export default function Calculator() {
           <div className={`border-t-2 pt-2 sm:pt-3 mt-2 sm:mt-3 transition-colors duration-500 ${isDarkMode ? 'border-white' : 'border-black'}`}>
             <p className={`font-semibold uppercase tracking-wide leading-tight transition-colors duration-500 ${isDarkMode ? 'text-gray-300' : 'text-black'}`}>
               <span className="hidden sm:inline text-xs sm:text-sm">Track your current cumulative GPA</span>
-              <span className="inline sm:hidden text-[10px]">Track your CGWA with precision</span>
             </p>
           </div>
         </header>
+
+        {/* Save/Import Bar */}
+        <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-md border transition-all duration-500 ${isDarkMode ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white/80 border-slate-200/50'}`}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            <div className={`flex-1 text-xs sm:text-sm font-medium transition-colors duration-500 ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+              <span className="hidden sm:inline"> Save your progress:</span>
+              <span className="sm:hidden"> Save:</span>
+            </div>
+            
+            <button
+              onClick={handleSaveData}
+              className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold uppercase tracking-wide transition-all duration-200 border-2 hover:scale-105 ${isDarkMode ? 'bg-primary-600 border-primary-500 text-white hover:bg-primary-500' : 'bg-primary-500 border-primary-600 text-white hover:bg-primary-600'}`}
+            >
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Save
+              </span>
+            </button>
+            
+            <label className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold uppercase tracking-wide transition-all duration-200 border-2 cursor-pointer hover:scale-105 ${isDarkMode ? 'bg-accent-500 border-accent-600 text-slate-900 hover:bg-accent-400' : 'bg-accent-500 border-accent-600 text-slate-900 hover:bg-accent-600'}`}>
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import
+              </span>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImportData}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           
@@ -239,27 +338,27 @@ export default function Calculator() {
             <div className="relative select-none">
               {/* Animated Blobs */}
               <span 
-                className={`absolute w-[60px] h-[60px] rounded-full opacity-30 animate-blob transition-all duration-500 ${isDarkMode ? 'bg-gradient-to-t from-transparent to-cyan-400' : 'bg-gradient-to-t from-transparent to-blue-400'}`}
+                className={`absolute w-[60px] h-[60px] rounded-full opacity-30 animate-blob transition-all duration-500 ${isDarkMode ? 'bg-gradient-to-t from-transparent to-primary-400' : 'bg-gradient-to-t from-transparent to-primary-400'}`}
                 style={{ top: '-5%', left: '-5%', animationDelay: '0.1s' }}
               />
               <span 
-                className={`absolute w-[80px] h-[80px] rounded-full opacity-30 animate-blob transition-all duration-500 ${isDarkMode ? 'bg-gradient-to-t from-transparent to-cyan-400' : 'bg-gradient-to-t from-transparent to-blue-400'}`}
+                className={`absolute w-[80px] h-[80px] rounded-full opacity-30 animate-blob transition-all duration-500 ${isDarkMode ? 'bg-gradient-to-t from-transparent to-primary-400' : 'bg-gradient-to-t from-transparent to-primary-400'}`}
                 style={{ top: '60%', left: '-20%', animationDelay: '0.2s' }}
               />
               <span 
-                className={`absolute w-[100px] h-[100px] rounded-full opacity-60 animate-blob transition-all duration-500 ${isDarkMode ? 'bg-gradient-to-t from-transparent to-cyan-400' : 'bg-gradient-to-t from-transparent to-blue-400'}`}
+                className={`absolute w-[100px] h-[100px] rounded-full opacity-60 animate-blob transition-all duration-500 ${isDarkMode ? 'bg-gradient-to-t from-transparent to-primary-400' : 'bg-gradient-to-t from-transparent to-primary-400'}`}
                 style={{ top: '10%', left: '60%', animationDelay: '0.3s' }}
               />
               <span 
-                className={`absolute w-[90px] h-[90px] rounded-full opacity-40 animate-blob transition-all duration-500 ${isDarkMode ? 'bg-gradient-to-t from-transparent to-cyan-400' : 'bg-gradient-to-t from-transparent to-blue-400'}`}
+                className={`absolute w-[90px] h-[90px] rounded-full opacity-40 animate-blob transition-all duration-500 ${isDarkMode ? 'bg-gradient-to-t from-transparent to-primary-400' : 'bg-gradient-to-t from-transparent to-primary-400'}`}
                 style={{ top: '70%', left: '50%', animationDelay: '0.4s' }}
               />
               
               {/* Card Content */}
-              <div className={`relative backdrop-blur-[15px] rounded-[5%] p-4 sm:p-6 flex flex-col justify-between min-h-[280px] sm:min-h-[320px] transition-all duration-500 ${isDarkMode ? 'outline outline-1 outline-blue-400 text-blue-400 bg-slate-900/60' : 'outline outline-1 outline-blue-500 text-blue-500 bg-white/60'}`}>
+              <div className={`relative backdrop-blur-[15px] rounded-[5%] p-4 sm:p-6 flex flex-col justify-between min-h-[280px] sm:min-h-[320px] transition-all duration-500 ${isDarkMode ? 'outline outline-1 outline-primary-400 text-primary-400 bg-slate-900/60' : 'outline outline-1 outline-primary-500 text-primary-500 bg-white/60'}`}>
                 {/* Check Icon */}
                 <svg 
-                  className={`absolute w-5 h-5 sm:w-6 sm:h-6 -top-2 -right-2 sm:-top-3 sm:-right-3 transition-colors duration-500 ${isDarkMode ? 'fill-blue-400' : 'fill-blue-500'}`}
+                  className={`absolute w-5 h-5 sm:w-6 sm:h-6 -top-2 -right-2 sm:-top-3 sm:-right-3 transition-colors duration-500 ${isDarkMode ? 'fill-primary-400' : 'fill-primary-500'}`}
                   xmlns="http://www.w3.org/2000/svg" 
                   viewBox="0 0 512 512"
                 >
@@ -268,7 +367,7 @@ export default function Calculator() {
                 
                 <div className="space-y-2 sm:space-y-3">
                   <strong className="text-sm sm:text-base font-black uppercase block">CGWA Calculator</strong>
-                  <p className={`text-xs leading-relaxed transition-colors duration-500 ${isDarkMode ? 'text-blue-200' : 'text-blue-600'}`}>
+                  <p className={`text-xs leading-relaxed transition-colors duration-500 ${isDarkMode ? 'text-primary-200' : 'text-primary-600'}`}>
                     He-yo! I'm <span className="font-bold">Nathan Rabanal</span>, a 3rd Year BSIT-MI Student at NU Fairview. I created this open-source calculator that helps NU students track their Cumulative GWA and check if their CGWA is within the reach for an academic honor.
                   </p>
                   <p>
@@ -276,13 +375,13 @@ export default function Calculator() {
                   </p>
                 </div>
                 
-                <hr className={`border-t opacity-50 transition-colors duration-500 ${isDarkMode ? 'border-blue-400' : 'border-blue-500'}`} />
+                <hr className={`border-t opacity-50 transition-colors duration-500 ${isDarkMode ? 'border-primary-400' : 'border-primary-500'}`} />
                 
                 <a 
                   href="https://github.com/ninathan/CGWA-Calculator" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={`group flex items-center justify-center gap-1 py-3 px-6 rounded-2xl text-xs font-black uppercase transition-all duration-300 outline outline-1 ${isDarkMode ? 'outline-blue-400 hover:bg-blue-400 hover:text-slate-900' : 'outline-blue-500 hover:bg-blue-500 hover:text-white'}`}
+                  className={`group flex items-center justify-center gap-1 py-3 px-6 rounded-2xl text-xs font-black uppercase transition-all duration-300 outline outline-1 ${isDarkMode ? 'outline-primary-400 hover:bg-primary-400 hover:text-slate-900' : 'outline-primary-500 hover:bg-primary-500 hover:text-white'}`}
                 >
                   <span>GitHub</span>
                   <svg 
@@ -297,7 +396,7 @@ export default function Calculator() {
             </div>
 
             {/* CGWA Result Card */}
-            <div className="bg-gradient-to-br from-blue-600 via-blue-600 to-violet-600 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl shadow-blue-600/20 text-white hover:shadow-2xl hover:shadow-blue-600/30 transition-all duration-500 hover:scale-[1.02]">
+            <div className="bg-gradient-to-br from-primary-600 via-primary-600 to-accent-500 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl shadow-primary-600/20 text-white hover:shadow-2xl hover:shadow-primary-600/30 transition-all duration-500 hover:scale-[1.02]">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wide opacity-90">Your CGWA</h3>
                 <button
@@ -404,7 +503,7 @@ export default function Calculator() {
               >
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-4">
                   <h3 className={`text-base sm:text-lg font-bold flex items-center gap-2 sm:gap-3 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                    <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-blue-600/20">
+                    <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-600 to-accent-600 text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-primary-600/20">
                       {year.yearNumber}
                     </span>
                     {year.yearNumber}{year.yearNumber === 1 ? 'st' : year.yearNumber === 2 ? 'nd' : year.yearNumber === 3 ? 'rd' : 'th'} Year
@@ -428,7 +527,7 @@ export default function Calculator() {
                       Total Units
                       <button
                         onClick={() => setShowUnitsInfo(!showUnitsInfo)}
-                        className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-200 hover:scale-110 ${isDarkMode ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                        className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-200 hover:scale-110 ${isDarkMode ? 'bg-primary-600 text-white hover:bg-primary-500' : 'bg-primary-500 text-white hover:bg-primary-600'}`}
                         title="Click for info"
                       >
                         ?
@@ -436,7 +535,7 @@ export default function Calculator() {
                       {showUnitsInfo && (
                         <div className={`absolute top-6 left-0 z-50 w-72 p-4 rounded-xl border-2 shadow-xl transition-all duration-300 ${isDarkMode ? 'bg-slate-700 border-slate-600 text-gray-200' : 'bg-white border-slate-300 text-slate-700'}`}>
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <span className={`text-xs font-bold uppercase tracking-wide ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Info</span>
+                            <span className={`text-xs font-bold uppercase tracking-wide ${isDarkMode ? 'text-primary-400' : 'text-primary-600'}`}>Info</span>
                             <button
                               onClick={() => setShowUnitsInfo(false)}
                               className={`text-sm font-bold hover:scale-110 transition-transform ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-slate-400 hover:text-slate-700'}`}
@@ -455,9 +554,9 @@ export default function Calculator() {
 
                   {/* Term Rows */}
                   {year.terms.map((term, idx) => (
-                    <div key={term.id} className={`grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start sm:items-center p-3 sm:p-3 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 group ${isDarkMode ? 'bg-gradient-to-r from-slate-700 to-blue-900/30 border-slate-600/60 hover:border-blue-500/60 hover:shadow-md' : 'bg-gradient-to-r from-slate-50 to-blue-50/30 border-slate-200/60 hover:border-blue-300/60 hover:shadow-md'}`}>
+                    <div key={term.id} className={`grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-start sm:items-center p-3 sm:p-3 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 group ${isDarkMode ? 'bg-gradient-to-r from-slate-700 to-primary-900/30 border-slate-600/60 hover:border-primary-500/60 hover:shadow-md' : 'bg-gradient-to-r from-slate-50 to-primary-50/30 border-slate-200/60 hover:border-primary-300/60 hover:shadow-md'}`}>
                       <div className={`sm:col-span-3 font-medium flex items-center gap-2 transition-colors duration-500 ${isDarkMode ? 'text-gray-200' : 'text-slate-700'}`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600 group-hover:scale-125 transition-transform duration-300"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary-600 group-hover:scale-125 transition-transform duration-300"></span>
                         {term.termNumber}{term.termNumber === 1 ? 'st' : term.termNumber === 2 ? 'nd' : term.termNumber === 3 ? 'rd' : 'th'} Term
                       </div>
                       
@@ -471,7 +570,7 @@ export default function Calculator() {
                           value={term.gwa}
                           onChange={(e) => updateTerm(year.id, term.id, 'gwa', e.target.value)}
                           placeholder="GWA"
-                          className={`w-full px-3 py-2.5 border-2 rounded-xl bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 opacity-80 focus:opacity-100 ${isDarkMode ? 'border-slate-600 text-white hover:border-slate-500 hover:bg-slate-700/50 focus:bg-slate-700 placeholder:text-gray-400' : 'border-white/80 text-slate-700 hover:border-slate-300 hover:bg-white/50 focus:bg-white placeholder:text-slate-400'}`}
+                          className={`w-full px-3 py-2.5 border-2 rounded-xl bg-transparent focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all duration-200 opacity-80 focus:opacity-100 ${isDarkMode ? 'border-slate-600 text-white hover:border-slate-500 hover:bg-slate-700/50 focus:bg-slate-700 placeholder:text-gray-400' : 'border-white/80 text-slate-700 hover:border-slate-300 hover:bg-white/50 focus:bg-white placeholder:text-slate-400'}`}
                         />
                         <div className={`input-title absolute -top-12 left-1/2 -translate-x-1/2 text-xs font-semibold tracking-wider px-3 py-2 rounded-lg opacity-0 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-lg border before:content-[''] before:absolute before:w-2.5 before:h-2.5 before:border-r before:border-b before:bottom-0 before:left-1/2 before:-translate-x-1/2 before:translate-y-1/2 before:rotate-45 before:-z-10 ${isDarkMode ? 'bg-slate-700 text-white border-slate-600 before:bg-slate-700 before:border-slate-600' : 'bg-white text-slate-800 border-slate-200 before:bg-white before:border-slate-200'}`}>
                           GWA
@@ -487,7 +586,7 @@ export default function Calculator() {
                           value={term.units}
                           onChange={(e) => updateTerm(year.id, term.id, 'units', e.target.value)}
                           placeholder="Units"
-                          className={`w-full px-3 py-2.5 border-2 rounded-xl bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 opacity-80 focus:opacity-100 ${isDarkMode ? 'border-slate-600 text-white hover:border-slate-500 hover:bg-slate-700/50 focus:bg-slate-700 placeholder:text-gray-400' : 'border-white/80 text-slate-700 hover:border-slate-300 hover:bg-white/50 focus:bg-white placeholder:text-slate-400'}`}
+                          className={`w-full px-3 py-2.5 border-2 rounded-xl bg-transparent focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all duration-200 opacity-80 focus:opacity-100 ${isDarkMode ? 'border-slate-600 text-white hover:border-slate-500 hover:bg-slate-700/50 focus:bg-slate-700 placeholder:text-gray-400' : 'border-white/80 text-slate-700 hover:border-slate-300 hover:bg-white/50 focus:bg-white placeholder:text-slate-400'}`}
                         />
                         <div className={`input-title absolute -top-12 left-1/2 -translate-x-1/2 text-xs font-semibold tracking-wider px-3 py-2 rounded-lg opacity-0 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-lg border before:content-[''] before:absolute before:w-2.5 before:h-2.5 before:border-r before:border-b before:bottom-0 before:left-1/2 before:-translate-x-1/2 before:translate-y-1/2 before:rotate-45 before:-z-10 ${isDarkMode ? 'bg-slate-700 text-white border-slate-600 before:bg-slate-700 before:border-slate-600' : 'bg-white text-slate-800 border-slate-200 before:bg-white before:border-slate-200'}`}>
                           UNITS

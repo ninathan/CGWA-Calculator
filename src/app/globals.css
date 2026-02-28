@@ -10,6 +10,16 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-primary-50: #E8F4FB;
+  --color-primary-200: #A8D7F1;
+  --color-primary-400: #8AC9F0;
+  --color-primary-500: #60B2E5;
+  --color-primary-600: #3A8AC4;
+  --color-primary-900: #1A4563;
+  --color-primary-950: #0D2331;
+  --color-accent-400: #FDE0A8;
+  --color-accent-500: #FCD581;
+  --color-accent-600: #E5B858;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,7 +37,8 @@ body {
 
 /* Modern accent and container sizing */
 :root {
-  --accent: #6366f1; /* indigo-500 */
+  --accent: #60B2E5; /* main blue accent */
+  --accent-gold: #FCD581; /* gold accent */
   --muted: #6b7280;
 }
 
@@ -128,7 +139,7 @@ input, button, textarea, select {
   padding: 10px 24px;
   font-size: 16px;
   color: white;
-  background: #6225e6;
+  background: #60B2E5;
   transition: all 1s;
   box-shadow: 4px 4px 0 black;
   transform: skewX(-15deg);
@@ -146,12 +157,12 @@ input, button, textarea, select {
 
 .cta-button:hover {
   transition: 0.5s;
-  box-shadow: 8px 8px 0 #fbc638;
+  box-shadow: 8px 8px 0 #FCD581;
 }
 
 @media (min-width: 640px) {
   .cta-button:hover {
-    box-shadow: 10px 10px 0 #fbc638;
+    box-shadow: 10px 10px 0 #FCD581;
   }
 }
 
@@ -213,7 +224,7 @@ input, button, textarea, select {
     fill: white;
   }
   50% {
-    fill: #fbc638;
+    fill: #FCD581;
   }
   100% {
     fill: white;
@@ -244,10 +255,10 @@ input, button, textarea, select {
 }
 
 .brutalist-button-mark:hover {
-  background-color: #296fbb !important;
-  border-color: #296fbb !important;
+  background-color: #60B2E5 !important;
+  border-color: #60B2E5 !important;
   color: #fff !important;
-  box-shadow: 7px 7px 0 #004280 !important;
+  box-shadow: 7px 7px 0 #3A8AC4 !important;
 }
 
 /* Theme Switch Styles */
@@ -256,11 +267,11 @@ input, button, textarea, select {
   --container-width: 5.625em;
   --container-height: 2.5em;
   --container-radius: 6.25em;
-  --container-light-bg: #3D7EAE;
+  --container-light-bg: #60B2E5;
   --container-night-bg: #1D1F2C;
   --circle-container-diameter: 3.375em;
   --sun-moon-diameter: 2.125em;
-  --sun-bg: #ECCA2F;
+  --sun-bg: #FCD581;
   --moon-bg: #C4C9D1;
   --spot-color: #959DB1;
   --circle-container-offset: calc((var(--circle-container-diameter) - var(--container-height)) / 2 * -1);
